@@ -6,7 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   dotenv.config()
   app.enableCors({
-    origin: 'https://amiteshtutorials.netlify.app/',
+    origin: ['https://amiteshtutorials.netlify.app/login', 'https://amiteshtutorials.netlify.app/dashboard'],
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   })
   app.setGlobalPrefix('api')
