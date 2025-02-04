@@ -52,6 +52,7 @@ export class DashboardService {
 
     return {
       username: user.username,
+      role: user.role,
       message: 'Welcome to the teacher dashboard! You can also upload content.',
     };
   }

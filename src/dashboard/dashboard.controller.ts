@@ -19,7 +19,7 @@ export class DashboardController {
     return this.dashboardService.getDashboardData(user.username);
   }
 
-  /*@UseGuards(JwtAuthGuard) // Apply the JwtAuthGuard to protect this route
+  @UseGuards(JwtAuthGuard) 
   @Post('upload')
   async uploadContent(@Req() req: Request, @Body() content: any) {
     const user = req.user;
@@ -28,6 +28,6 @@ export class DashboardController {
       return { message: 'User not found' };
     }
 
-    return this.dashboardService.uploadContent(user.id, content);
-  }*/
+    return this.dashboardService.uploadContent(user.username, content);
+  }
 }
