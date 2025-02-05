@@ -21,11 +21,11 @@ export class DashboardController {
     return this.dashboardService.getDashboardData(user.username);
   }
 
-  
+
   @UseGuards(JwtAuthGuard)
-  @Get()
- async getAllStudentsData(@Query('role') role: 'STUDENT'){
-   return this.dashboardService.getAllStudentData(role)
+  @Get('students')
+ async getAllStudentsData(){
+   return this.dashboardService.getAllStudentData('STUDENT')
  }
 
  @UseGuards(JwtAuthGuard)
