@@ -1,14 +1,17 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, Logger } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class DashboardService {
+  private readonly logger = new Logger(DashboardService.name);
+
   constructor(private readonly databaseservice: DatabaseService) {}
 
   async getDashboardData(username: string) {
-    const user = await this.databaseservice.user.findUnique({ where: { username: username } });
+    const user = await this.databaseservice.user.findUnique({ where: { username } });
 
     if (!user) {
+      this.logger.error(`User not found: ${username}`);
       throw new NotFoundException('User not found');
     }
 
@@ -19,17 +22,19 @@ export class DashboardService {
       const teacherData = await this.getTeacherData(username);
       return teacherData;
     } else {
+      this.logger.warn(`Unauthorized access attempt by user: ${username}`);
       throw new UnauthorizedException('Unauthorized');
     }
   }
 
   async getStudentData(username: string) {
     const user = await this.databaseservice.user.findUnique({ 
-      where: { username: username }, 
+      where: { username }, 
       include: { marks: true } 
     });
 
     if (!user) {
+      this.logger.error(`User not found: ${username}`);
       throw new NotFoundException('User not found');
     }
 
@@ -44,26 +49,22 @@ export class DashboardService {
 
   async getAllStudentData(role: 'STUDENT') {
     const studentAndMarks = await this.databaseservice.user.findMany({
-      where: {
-        role
-      },
-      include: {
-        marks: true
-      }
+      where: { role },
+      include: { marks: true },
     });
 
     return studentAndMarks.map(student => ({
       StudentName: student.username,
       Class: student.class,
-      Marks: student.marks
+      Marks: student.marks,
     }));
   }
-  
 
   async getTeacherData(username: string) {
-    const user = await this.databaseservice.user.findUnique({ where: { username: username } });
+    const user = await this.databaseservice.user.findUnique({ where: { username } });
     
     if (!user) {
+      this.logger.error(`User not found: ${username}`);
       throw new NotFoundException('User not found');
     }
     
@@ -71,9 +72,9 @@ export class DashboardService {
       {
         username: user.username,
         role: user.role,
-      }];
+      }
+    ];
   }
-
 
   async uploadMark(mark: { subject: string; mark: number; studentId: number }) {
     try {
@@ -82,19 +83,16 @@ export class DashboardService {
           subject: mark.subject,
           mark: mark.mark,
           student: {
-            connect: {
-              id: mark.studentId,
-            },
+            connect: { id: mark.studentId },
           },
         },
       });
   
+      this.logger.log(`Mark uploaded successfully for student ID: ${mark.studentId}`);
       return { message: 'Mark uploaded successfully!' };
     } catch (error) {
-      console.error('Mark upload failed:', error);
+      this.logger.error(`Mark upload failed: ${error.message}`);
       throw new Error('Mark upload failed');
     }
   }
-  
-  }
-  
+}

@@ -1,16 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable , Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SignupService {
+  private readonly logger = new Logger(SignupService.name);
   constructor(private readonly databaseservice: DatabaseService) {}
 
   async create(createSignupDto: Prisma.UserCreateInput) {
     const saltOrRounds = 10;
     createSignupDto.password = await bcrypt.hash(createSignupDto.password, saltOrRounds);
-    
+    this.logger.log(`New user created`)
     return this.databaseservice.user.create({ data: createSignupDto });
   }
 
