@@ -1,4 +1,3 @@
-
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 
@@ -43,6 +42,18 @@ export class DashboardService {
     };
   }
 
+  async getAllStudentData(role: 'STUDENT') {
+    return this.databaseservice.user.findMany({
+      where: {
+        role
+      },
+      include: {
+        marks: true
+      }
+    });
+  }
+  
+
   async getTeacherData(username: string) {
     const user = await this.databaseservice.user.findUnique({ where: { username: username } });
 
@@ -56,19 +67,26 @@ export class DashboardService {
       message: 'Welcome to the teacher dashboard! You can also upload content.',
     };
   }
-
-  async uploadContent(username: string, content: any) {
-    const user = await this.databaseservice.user.findUnique({ where: { username: username} });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
+  async uploadMark(mark: { subject: string; mark: number; studentId: number }) {
+    try {
+      await this.databaseservice.mark.create({
+        data: {
+          subject: mark.subject,
+          mark: mark.mark,
+          student: {
+            connect: {
+              id: mark.studentId,
+            },
+          },
+        },
+      });
+  
+      return { message: 'Mark uploaded successfully!' };
+    } catch (error) {
+      console.error('Mark upload failed:', error);
+      throw new Error('Mark upload failed');
     }
-
-    if (user.role !== 'TEACHER') {
-      throw new UnauthorizedException('Unauthorized');
-    }
-
-    // Handle the content upload logic here
-    return { message: 'Content uploaded successfully!' };
   }
-}
+  
+  }
+  
