@@ -43,7 +43,7 @@ export class DashboardService {
   }
 
   async getAllStudentData(role: 'STUDENT') {
-    return this.databaseservice.user.findMany({
+    const studentAndMarks = await this.databaseservice.user.findMany({
       where: {
         role
       },
@@ -51,6 +51,12 @@ export class DashboardService {
         marks: true
       }
     });
+
+    return studentAndMarks.map(student => ({
+      StudentName: student.username,
+      Class: student.class,
+      Marks: student.marks
+    }));
   }
   
 
