@@ -7,7 +7,22 @@ import { JwtAuthGuard } from 'src/authguard/jwtauth.guard';
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
-@UseGuards(JwtAuthGuard)
+
+  
+  @UseGuards(JwtAuthGuard) 
+  @Get()
+  async getDashboard(@Req() req: Request) {
+    const user = req.user;
+
+    if (!user) {
+      return { message: 'User not found' };
+    }
+
+    return this.dashboardService.getDashboardData(user.username);
+  }
+
+  
+  @UseGuards(JwtAuthGuard)
   @Get()
  async getAllStudentsData(@Query('role') role: 'STUDENT'){
    return this.dashboardService.getAllStudentData(role)
@@ -21,17 +36,6 @@ export class DashboardController {
  
   
 
-  @UseGuards(JwtAuthGuard) 
-  @Get()
-  async getDashboard(@Req() req: Request) {
-    const user = req.user;
-
-    if (!user) {
-      return { message: 'User not found' };
-    }
-
-    return this.dashboardService.getDashboardData(user.username);
-  }
 
  
  

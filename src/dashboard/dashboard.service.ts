@@ -62,17 +62,19 @@ export class DashboardService {
 
   async getTeacherData(username: string) {
     const user = await this.databaseservice.user.findUnique({ where: { username: username } });
-
+    
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
-    return {
-      username: user.username,
-      role: user.role,
-      message: 'Welcome to the teacher dashboard! You can also upload content.',
-    };
+    
+    return [
+      {
+        username: user.username,
+        role: user.role,
+      }];
   }
+
+
   async uploadMark(mark: { subject: string; mark: number; studentId: number }) {
     try {
       await this.databaseservice.mark.create({
