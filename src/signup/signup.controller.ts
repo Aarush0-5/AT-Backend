@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { SignupService } from './signup.service';
 import { Prisma } from '@prisma/client';
 
-@Controller('signup')
+@Controller('signupokay')
 export class SignupController {
   constructor(private readonly signupService: SignupService) {}
 

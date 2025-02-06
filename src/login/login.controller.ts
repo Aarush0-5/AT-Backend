@@ -1,5 +1,6 @@
 import { Controller, Post, Body, HttpStatus, HttpException, Logger } from '@nestjs/common';
 import { LoginService } from './login.service';
+import { LoginDTO } from './dto/dto';
 
 @Controller('login')
 export class LoginController {
@@ -7,13 +8,13 @@ export class LoginController {
   constructor(private readonly loginService: LoginService) {}
 
   @Post()
-  async login(@Body() logindto: { username: string; password: string }) {
+  async login(@Body() loginDTO: LoginDTO) {
     try {
-      const result = await this.loginService.authenticateuser(logindto.username, logindto.password);
-      this.logger.log(`New log in recorded`)
+      const result = await this.loginService.authenticateuser(loginDTO.username, loginDTO.password);
+      this.logger.log(`New log in recorded from ${loginDTO.username}`);
       return { accessToken: result.accessToken };
     } catch (error) {
-      this.logger.error("Invalid credentials")
+      this.logger.error("Invalid credentials");
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
   }
