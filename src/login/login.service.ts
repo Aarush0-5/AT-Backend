@@ -19,7 +19,7 @@ export class LoginService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      this.logger.error('Wrong Password')
+      this.logger.error(`Wrong Password : ${username}`)
       throw new UnauthorizedException('Invalid credentials');
     }
     
