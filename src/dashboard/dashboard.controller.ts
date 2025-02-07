@@ -33,7 +33,7 @@ export class DashboardController {
 
 @UseGuards(JwtAuthGuard)
  @Post('upload')
- async uploadContent(@Body() mark: { subject: string; mark: number; studentId: number }) {
+ async uploadContent(@Body() mark: { subject: string; mark: string; studentId: number }) {
    this.logger.log(`Uploading mark for student ID: ${mark.studentId}`);
    return this.dashboardService.uploadMark(mark);
  }

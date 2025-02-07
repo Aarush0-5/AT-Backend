@@ -78,7 +78,7 @@ export class DashboardService {
   }
 
 
-  async uploadMark(mark: { subject: string; mark: number; studentId: number }) {
+  async uploadMark(mark: { subject: string; mark: string; studentId: number }) {
     try {
       await this.databaseservice.mark.create({
         data: {
