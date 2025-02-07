@@ -33,7 +33,7 @@ async function bootstrap() {
     noSniff: true,
     hidePoweredBy: true,
     hsts: {
-      maxAge: 31536000, // 1 year
+      maxAge: 31536000, 
       includeSubDomains: true,
       preload: true,
     },
