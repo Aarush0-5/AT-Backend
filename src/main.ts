@@ -10,12 +10,12 @@ async function bootstrap() {
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'", 'https://amiteshtutorials.netlify.app', ' http://localhost:8081'],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app', ' http://localhost:8081' ],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app' , ' http://localhost:8081' ],
-        imgSrc: ["'self'", "data:", 'https://amiteshtutorials.netlify.app', ' http://localhost:8081'],
-        connectSrc: ["'self'", 'https://amiteshtutorials.netlify.app', ' http://localhost:8081'],
-        fontSrc: ["'self'", 'https://amiteshtutorials.netlify.app', ' http://localhost:8081'],
+        defaultSrc: ["'self'", 'https://amiteshtutorials.netlify.app'],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app' ],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app'  ],
+        imgSrc: ["'self'", "data:", 'https://amiteshtutorials.netlify.app'],
+        connectSrc: ["'self'", 'https://amiteshtutorials.netlify.app'],
+        fontSrc: ["'self'", 'https://amiteshtutorials.netlify.app'],
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
       },
@@ -40,7 +40,7 @@ async function bootstrap() {
   }));
   
   app.enableCors({
-    origin: ['https://amiteshtutorials.netlify.app',  'http://localhost:8081'],
+    origin: ['https://amiteshtutorials.netlify.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
