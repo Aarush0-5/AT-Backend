@@ -7,13 +7,15 @@ import { LoginModule } from './login/login.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { QuizModule } from './quiz/quiz.module';
 
 @Module({
   imports: [SignupModule, DatabaseModule, LoginModule, DashboardModule,
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 5
-    }])
+    }]),
+    QuizModule
   ],
   controllers: [AppController],
   providers: [AppService,
