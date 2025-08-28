@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Body, Logger, Param } from '@nestjs/common';
 import { QuizService } from './quiz.service';
+import { JwtAuthGuard } from 'src/authguard/jwtauth.guard';
 
 @Controller('quiz')
 export class QuizController {
@@ -7,11 +8,12 @@ export class QuizController {
 
   constructor(private readonly quizService: QuizService) {}
 
-  @Get('students/:username')
-async getStudentsData(@Param('username') username: string) {
-  this.logger.log('Fetching student data');
-  return this.quizService.getStudentData(username);
-}
+@UseGuards(JwtAuthGuard)
+ @Get('students')
+  async getStudentsData(username: string) {
+   this.logger.log('Fetching student data');
+   return this.quizService.getStudentData();
+  }
 
   @Post('generate')
   async generate(
