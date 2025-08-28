@@ -1,9 +1,18 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { QuizService } from './quiz.service';
+import { DatabaseService } from 'src/database/database.service';
+constructor(private readonly databaseservice: DatabaseService) {}
 
 @Controller('quiz')
 export class QuizController {
   constructor(private readonly quizService: QuizService) {}
+
+
+  @Get('students')
+   async getAllStudentsData(){
+   this.logger.log('Fetching all student data');
+     return this.dashboardService.getAllStudentData('STUDENT')
+  }
 
   @Post('generate')
   async generate(@Body() body: { topic: string; difficulty: string; numQuestions: number }) {
