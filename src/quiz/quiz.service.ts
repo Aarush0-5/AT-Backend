@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class QuizService {
   private client: GoogleGenAI;
+
+  private readonly logger = new Logger(QuizService.name);
 
   constructor() {
     this.client = new GoogleGenAI({
