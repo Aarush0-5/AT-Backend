@@ -9,8 +9,8 @@ export class QuizController {
 
   @Get('students')
   async getStudentsData() {
-    this.logger.log('Fetching all student data');
-    return this.quizService.getStudentData(`${username}`);
+    this.logger.log('Fetching student data');
+    return this.quizService.getStudentData(username);
   }
 
   @Post('generate')
