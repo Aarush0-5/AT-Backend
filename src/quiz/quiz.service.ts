@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/genai';
 
 @Injectable()
 export class QuizService {
