@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Logger, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Logger, Param, UseGuards } from '@nestjs/common';
 import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from 'src/authguard/jwtauth.guard';
 
