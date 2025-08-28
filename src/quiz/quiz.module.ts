@@ -3,6 +3,7 @@ import { QuizService } from './quiz.service';
 import { QuizController } from './quiz.controller';
 
 @Module({
+  imports : [DatabaseModule] ,
   controllers: [QuizController],
   providers: [QuizService],
 })
