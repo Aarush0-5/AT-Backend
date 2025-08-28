@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger , NotFoundException} from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import { DatabaseService } from 'src/database/database.service';
 
@@ -8,13 +8,12 @@ export class QuizService {
 
   private readonly logger = new Logger(QuizService.name);
 
-  constructor() {
-    this.client = new GoogleGenAI({
+  constructor(private readonly databaseservice: DatabaseService) {
+     this.client = new GoogleGenAI({
       apiKey: process.env.GOOGLE_API_KEY,
     });
-  }
+   }
 
-  constructor(private readonly databaseservice: DatabaseService) {}
 
    async getStudentData(username: string) {
     const user = await this.databaseservice.user.findUnique({ 
