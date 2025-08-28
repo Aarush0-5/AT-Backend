@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { GoogleGenerativeAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 @Injectable()
 export class QuizService {
-  private client: GoogleGenAI;
+  private client: GoogleGenerativeAI;
 
   constructor() {
-    this.client = new GoogleGenAI({
-      apiKey: process.env.GOOGLE_API_KEY,
-    });
+    this.client = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
   }
 
   async generateQuiz(topic: string, difficulty: string, numQuestions: number) {
@@ -32,15 +30,16 @@ export class QuizService {
    Each object must contain exactly these keys:  
    - 'question' (string)  
    - 'options' (array of exactly 4 strings)  
-  - 'correct_answer' (string, matching one of the options)  
-     `
+   - 'correct_answer' (string, matching one of the options)  
+     `;
 
-    const response = await this.client.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: prompt,
-    });
+    const model = this.client.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    return response.text;
+    const response = await model.generateContent([
+      { role: 'user', parts: [{ text: prompt }] },
+    ]);
+
+    return response.response.text(); // return clean text
   }
 
   async evaluateQuiz(quiz: any, answers: any) {
@@ -61,11 +60,12 @@ export class QuizService {
       }
     `;
 
-    const response = await this.client.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: prompt,
-    });
+    const model = this.client.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    return response.text;
+    const response = await model.generateContent([
+      { role: 'user', parts: [{ text: prompt }] },
+    ]);
+
+    return response.response.text();
   }
 }
