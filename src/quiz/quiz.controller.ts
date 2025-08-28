@@ -8,9 +8,9 @@ export class QuizController {
   constructor(private readonly quizService: QuizService) {}
 
   @Get('students')
-  async getAllStudentsData() {
+  async getStudentsData() {
     this.logger.log('Fetching all student data');
-    return this.quizService.getAllStudentData('STUDENT');
+    return this.quizService.getStudentData('STUDENT');
   }
 
   @Post('generate')
