@@ -7,11 +7,11 @@ export class QuizController {
 
   constructor(private readonly quizService: QuizService) {}
 
-  @Get('students')
-  async getStudentsData(@Param('username') username: string) {
-    this.logger.log('Fetching student data');
-    return this.quizService.getStudentData(username);
-  }
+  @Get('students/:username')
+async getStudentsData(@Param('username') username: string) {
+  this.logger.log('Fetching student data');
+  return this.quizService.getStudentData(username);
+}
 
   @Post('generate')
   async generate(
