@@ -1,4 +1,4 @@
-_11Boimport { NestFactory } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
 import  helmet from "helmet"
@@ -14,7 +14,7 @@ async function bootstrap() {
         scriptSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app',  ],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app' , ],
         imgSrc: ["'self'", "data:", 'https://amiteshtutorials.netlify.app',],
-        connectSrc: ["'self'", 'https://amiteshtutorials.netlify.app',],
+        connectSrc: ["'self'", 'https://amiteshtutorials.netlify.app', ],
         fontSrc: ["'self'", 'https://amiteshtutorials.netlify.app', ],
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
@@ -40,7 +40,7 @@ async function bootstrap() {
   }));
   
   app.enableCors({
-    origin: ['https://amiteshtutorials.netlify.app', ],
+    origin: ['https://amiteshtutorials.netlify.app',],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
