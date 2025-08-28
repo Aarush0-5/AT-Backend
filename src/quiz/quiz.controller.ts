@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Logger, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Logger, Param, UseGuards, Req } from '@nestjs/common';
 import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from 'src/authguard/jwtauth.guard';
 import { Request } from 'express';
@@ -19,7 +19,7 @@ export class QuizController {
 
     return this.quizService.getStudentData(username);
   }
-}
+
   @Post('generate')
   async generate(
     @Body() body: { topic: string; difficulty: string; numQuestions: number },
