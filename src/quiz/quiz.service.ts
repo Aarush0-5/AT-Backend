@@ -7,25 +7,36 @@ export class QuizService {
 
   constructor() {
     this.client = new GoogleGenAI({
-      apiKey: process.env.GOOGLE_AI_API_KEY,
+      apiKey: process.env.GOOGLE_API_KEY,
     });
   }
 
   async generateQuiz(topic: string, difficulty: string, numQuestions: number) {
-    const prompt = `
-      Generate ${numQuestions || 5} ${difficulty || 'easy'} math questions on ${topic || 'general math'}.
-      Format output strictly as JSON:
-      [
-        {
-          "question": "string",
-          "options": ["a","b","c","d"],
-          "correct_answer": "string"
-        }
-      ]
-    `;
+    const prompt = `You are a quiz generator.  
+    Generate ${numQuestions || 5} ${difficulty || 'easy'} multiple-choice math questions on ${topic || 'general math'}.  
+
+    Constraints:  
+    - Only generate questions if the topic is related to math or science.  
+    - If the input is not math or science related, return an empty JSON array: []  
+    - Output strictly as JSON, no text, no markdown, no explanations.  
+
+    Format:  
+    [
+     {
+      "question": "string",
+      "options": ["a", "b", "c", "d"],
+      "correct_answer": "string"
+     }
+    ]  
+
+   Each object must contain exactly these keys:  
+   - 'question' (string)  
+   - 'options' (array of exactly 4 strings)  
+  - 'correct_answer' (string, matching one of the options)  
+     `
 
     const response = await this.client.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
 
@@ -51,7 +62,7 @@ export class QuizService {
     `;
 
     const response = await this.client.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
 
