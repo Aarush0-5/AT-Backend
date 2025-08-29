@@ -97,8 +97,8 @@ export class QuizService {
       if (!textResponse) {
         throw new Error('Failed to get a valid evaluation response from the model.');
       }
-
-      const quizResults = JSON.parse(textResponse);
+      const cleanResponse = textResponse.replace(/```json|```/g, '').trim();
+      const quizResults = JSON.parse(cleanResponse);
       const finalScore = quizResults.score || 0;
 
 
@@ -116,7 +116,7 @@ export class QuizService {
     try {
       const leaderboard = await this.databaseService.score.findMany({
         orderBy: {
-          score: 'desc', // Order by score from highest to lowest
+          score: 'desc', 
         },
         include: {
           student: {
@@ -136,7 +136,7 @@ export class QuizService {
 
   private async saveScore(username: string, finalScore: number) {
     try {
-      const user = await this.databaseService.user.findFirst({
+      const user = await this.databaseService.user.findUnique({
         where: { username: username },
       });
 
