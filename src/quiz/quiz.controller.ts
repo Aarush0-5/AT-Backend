@@ -33,4 +33,10 @@ export class QuizController {
     const { quiz, answers } = body;
     return this.quizService.evaluateQuiz(quiz, answers);
   }
+
+  @Get('leaderboard')
+  async getLeaderboardData() {
+    this.logger.log('Fetching leaderboard data');
+    return this.quizService.getLeaderboardData();
+  }
 }

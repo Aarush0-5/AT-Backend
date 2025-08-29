@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql",
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      =  env("DATABASE_URL")
 }
 
 model User {
@@ -21,6 +21,7 @@ model User {
   role        Role
 
   marks       Mark[]
+  score       Score[]
 }
 
 enum Role {
@@ -34,4 +35,11 @@ model Mark {
   mark     String
   student   User     @relation(fields: [studentId], references: [id]) 
   studentId Int
+}
+
+model Score {
+  id        Int      @id @default(autoincrement())
+  studentId  Int
+  student   User     @relation(fields: [studentId], references: [id]) 
+  score     Int
 }
