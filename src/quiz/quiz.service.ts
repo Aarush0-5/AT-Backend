@@ -136,7 +136,7 @@ export class QuizService {
 
   private async saveScore(username: string, finalScore: number) {
     try {
-      const user = await this.databaseService.user.findUnique({
+      const user = await this.databaseService.user.findFirst({
         where: { username: username },
       });
 

@@ -39,7 +39,7 @@ model Mark {
 
 model Score {
   id        Int      @id @default(autoincrement())
-  studentId  Int
+  studentId  Int     @unique
   student   User     @relation(fields: [studentId], references: [id]) 
   score     Int
 }
