@@ -17,14 +17,13 @@ export class QuizController {
     const username = user.username;
     return this.quizService.getStudentData(username);
   }
-
   @UseGuards(JwtAuthGuard)
   @Post('generate')
   async generateQuiz(
     @Req() req: Request,
     @Body() body: { topic: string; difficulty: string; numQuestions: number },
   ) {
-    const username = (req.user as any).username; // comes from JWT payload
+    const username = (req.user as { username: string }).username; 
     return this.quizService.generateQuiz(
       username,
       body.topic,
@@ -32,7 +31,7 @@ export class QuizController {
       body.numQuestions,
     );
   }
-
+}
   @UseGuards(JwtAuthGuard)
   @Post('evaluate')
   async evaluate(@Req() req: Request, @Body() body: { quiz: any; answers: any }) {

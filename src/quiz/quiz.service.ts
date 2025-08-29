@@ -98,55 +98,63 @@ export class QuizService {
 
     return {
       username: user.username,
+      class: user.class
     };
   }
 
-  async generateQuiz(username: string ,topic: string, difficulty: string, numQuestions: number) {
-
-     if (!(await this.canMakeRequest(username))) {
+  async generateQuiz(username: string, topic: string, difficulty: string, numQuestions: number) {
+  if (!(await this.canMakeRequest(username))) {
     this.logger.warn(`User ${username} exceeded daily quota`);
-    return '[]'; // or throw new Error("Daily limit reached")
+    return '[]';
   }
 
-    const prompt = `You are a quiz generator.
-    Generate ${numQuestions || 5} ${difficulty || 'easy'} multiple-choice math questions on ${topic || 'general math'}.
 
-    Constraints:
-    - Only generate questions if the topic is related to math or science.
-    - If the input is not math or science related, return an empty JSON array: []
-    - Output strictly as JSON, no text, no markdown, no explanations.
+  const student = await this.getStudentData(username);
+  const classLevel = student.class;
 
-    Format:
-    [
-      {
+  const prompt = `You are a quiz generator.
+  Generate ${numQuestions || 5} ${difficulty || 'easy'} multiple-choice math questions on ${topic || 'general math'} for class ${classLevel}.
+
+  Constraints:
+  - Only generate questions if the topic is related to math.
+  - Ensure that the difficulty and wording of the questions match the level of a class ${classLevel} student.
+  - If the input is not math or science related, return an empty JSON array: []
+  - Output strictly as JSON, no text, no markdown, no explanations.
+
+  Format:
+  [
+    {
       "question": "string",
       "options": ["a", "b", "c", "d"],
       "correct_answer": "string"
-      }
-    ]
-
-    Each object must contain exactly these keys:
-    - 'question' (string)
-    - 'options' (array of exactly 4 strings)
-    - 'correct_answer' (string, matching one of the options)
-    `;
-
-    try {
-      const response = await this.client.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: [{ text: prompt }],
-      });
-      const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!textResponse) {
-        throw new Error('Failed to get a valid response from the model.');
-      }
-      await this.recordRequest(username);
-      return textResponse;
-    } catch (error) {
-      this.logger.error(`Error generating quiz: ${error.message}`);
-      return '[]';
     }
+  ]
+
+  Each object must contain exactly these keys:
+  - 'question' (string)
+  - 'options' (array of exactly 4 strings)
+  - 'correct_answer' (string, matching one of the options)
+  `;
+
+  try {
+    const response = await this.client.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: [{ text: prompt }],
+    });
+
+    const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!textResponse) {
+      throw new Error('Failed to get a valid response from the model.');
+    }
+
+    await this.recordRequest(username);
+    return textResponse;
+  } catch (error) {
+    this.logger.error(`Error generating quiz: ${error.message}`);
+    return '[]';
   }
+}
+
 
   async evaluateQuiz(quiz: any, answers: any, username: string) {
     this.logger.log(`Evaluating quiz for user: ${username}`);
