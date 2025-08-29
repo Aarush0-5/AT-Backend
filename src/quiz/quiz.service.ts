@@ -8,9 +8,81 @@ export class QuizService {
 
   private readonly logger = new Logger(QuizService.name);
 
+  private readonly DAILY_STUDENT_LIMIT = 25;
+  private readonly DAILY_GLOBAL_LIMIT = 1500;
+
   constructor(private readonly databaseService: DatabaseService) {
     this.client = new GoogleGenAI({
       apiKey: process.env.GOOGLE_API_KEY,
+    });
+  }
+   
+    private async resetIfNewDay(username: string) {
+    const today = new Date().toDateString();
+
+    // per-student usage
+    let usage = await this.databaseService.usage.findUnique({
+      where: { username },
+    });
+
+    if (!usage) {
+      usage = await this.databaseService.usage.create({
+        data: { username, count: 0, lastReset: new Date() },
+      });
+    }
+
+    if (usage.lastReset.toDateString() !== today) {
+      await this.databaseService.usage.update({
+        where: { username },
+        data: { count: 0, lastReset: new Date() },
+      });
+      usage.count = 0;
+    }
+
+    // global usage record (use a fake username "__global__")
+    let global = await this.databaseService.usage.findUnique({
+      where: { username: "__global__" },
+    });
+
+    if (!global) {
+      global = await this.databaseService.usage.create({
+        data: { username: "__global__", count: 0, lastReset: new Date() },
+      });
+    }
+
+    if (global.lastReset.toDateString() !== today) {
+      await this.databaseService.usage.update({
+        where: { username: "__global__" },
+        data: { count: 0, lastReset: new Date() },
+      });
+      global.count = 0;
+    }
+
+    return { student: usage, global };
+  }
+
+  private async canMakeRequest(username: string): Promise<boolean> {
+    const { student, global } = await this.resetIfNewDay(username);
+
+    if (student.count >= this.DAILY_STUDENT_LIMIT) {
+      return false;
+    }
+    if (global.count >= this.DAILY_GLOBAL_LIMIT) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private async recordRequest(username: string) {
+    await this.databaseService.usage.update({
+      where: { username },
+      data: { count: { increment: 1 } },
+    });
+
+    await this.databaseService.usage.update({
+      where: { username: "__global__" },
+      data: { count: { increment: 1 } },
     });
   }
 
@@ -29,7 +101,13 @@ export class QuizService {
     };
   }
 
-  async generateQuiz(topic: string, difficulty: string, numQuestions: number) {
+  async generateQuiz(username: string ,topic: string, difficulty: string, numQuestions: number) {
+
+     if (!(await this.canMakeRequest(username))) {
+    this.logger.warn(`User ${username} exceeded daily quota`);
+    return '[]'; // or throw new Error("Daily limit reached")
+  }
+
     const prompt = `You are a quiz generator.
     Generate ${numQuestions || 5} ${difficulty || 'easy'} multiple-choice math questions on ${topic || 'general math'}.
 
@@ -62,6 +140,7 @@ export class QuizService {
       if (!textResponse) {
         throw new Error('Failed to get a valid response from the model.');
       }
+      await this.recordRequest(username);
       return textResponse;
     } catch (error) {
       this.logger.error(`Error generating quiz: ${error.message}`);

@@ -18,12 +18,19 @@ export class QuizController {
     return this.quizService.getStudentData(username);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('generate')
-  async generate(
+  async generateQuiz(
+    @Req() req: Request,
     @Body() body: { topic: string; difficulty: string; numQuestions: number },
   ) {
-    const { topic, difficulty, numQuestions } = body;
-    return this.quizService.generateQuiz(topic, difficulty, numQuestions);
+    const username = (req.user as any).username; // comes from JWT payload
+    return this.quizService.generateQuiz(
+      username,
+      body.topic,
+      body.difficulty,
+      body.numQuestions,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

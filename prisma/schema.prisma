@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      =  env("DATABASE_URL")
+  url      =  "postgresql://neondb_owner:npg_Vx8igQwJrM3j@ep-mute-hat-a8gwe9s4-pooler.eastus2.azure.neon.tech/neondb?sslmode=require"
 }
 
 model User {
@@ -22,6 +22,7 @@ model User {
 
   marks       Mark[]
   score       Score[]
+  usage       Usage[]
 }
 
 enum Role {
@@ -42,4 +43,13 @@ model Score {
   studentId  Int     @unique
   student   User     @relation(fields: [studentId], references: [id]) 
   score     Int
+}
+
+model Usage {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique 
+  count     Int      @default(0)
+  lastReset DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
 }
