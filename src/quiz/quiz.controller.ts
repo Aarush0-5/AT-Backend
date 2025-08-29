@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Body, Logger, Param, UseGuards, Req } from '@nestjs/common';
+import { 
+  Controller, 
+  Post, 
+  Get, 
+  Body, 
+  Logger, 
+  UseGuards, 
+  Req 
+} from '@nestjs/common';
 import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from 'src/authguard/jwtauth.guard';
 import { Request } from 'express';
@@ -14,9 +22,9 @@ export class QuizController {
   async getStudentsData(@Req() req: Request) {
     this.logger.log('Fetching student data');
     const user = req.user as { username: string };
-    const username = user.username;
-    return this.quizService.getStudentData(username);
+    return this.quizService.getStudentData(user.username);
   }
+
   @UseGuards(JwtAuthGuard)
   @Post('generate')
   async generateQuiz(
@@ -31,14 +39,16 @@ export class QuizController {
       body.numQuestions,
     );
   }
-}
+
   @UseGuards(JwtAuthGuard)
   @Post('evaluate')
-  async evaluate(@Req() req: Request, @Body() body: { quiz: any; answers: any }) {
+  async evaluate(
+    @Req() req: Request, 
+    @Body() body: { quiz: any; answers: any },
+  ) {
     const { quiz, answers } = body;
     const user = req.user as { username: string };
-    const username = user.username;
-    return this.quizService.evaluateQuiz(quiz, answers, username);
+    return this.quizService.evaluateQuiz(quiz, answers, user.username);
   }
 
   @Get('leaderboard')
