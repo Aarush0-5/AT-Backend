@@ -13,10 +13,8 @@ export class QuizController {
   @Get('students')
   async getStudentsData(@Req() req: Request) {
     this.logger.log('Fetching student data');
-
     const user = req.user as { username: string };
     const username = user.username;
-
     return this.quizService.getStudentData(username);
   }
 
@@ -28,10 +26,13 @@ export class QuizController {
     return this.quizService.generateQuiz(topic, difficulty, numQuestions);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('evaluate')
-  async evaluate(@Body() body: { quiz: any; answers: any }) {
+  async evaluate(@Req() req: Request, @Body() body: { quiz: any; answers: any }) {
     const { quiz, answers } = body;
-    return this.quizService.evaluateQuiz(quiz, answers);
+    const user = req.user as { username: string };
+    const username = user.username;
+    return this.quizService.evaluateQuiz(quiz, answers, username);
   }
 
   @Get('leaderboard')

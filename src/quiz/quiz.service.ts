@@ -1,6 +1,6 @@
-import { Injectable, Logger , NotFoundException} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
-import { PrismaService } from 'src/prisma/prisma.service'; 
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class QuizService {
@@ -8,16 +8,15 @@ export class QuizService {
 
   private readonly logger = new Logger(QuizService.name);
 
-  constructor(private readonly prisma: PrismaService) {
-     this.client = new GoogleGenAI({
+  constructor(private readonly databaseService: DatabaseService) {
+    this.client = new GoogleGenAI({
       apiKey: process.env.GOOGLE_API_KEY,
     });
-   }
+  }
 
-
-   async getStudentData(username: string) {
-    const user = await this.prisma.user.findUnique({ 
-      where: { username },  
+  async getStudentData(username: string) {
+    const user = await this.databaseService.user.findUnique({
+      where: { username },
     });
 
     if (!user) {
@@ -31,38 +30,47 @@ export class QuizService {
   }
 
   async generateQuiz(topic: string, difficulty: string, numQuestions: number) {
-    const prompt = `You are a quiz generator.  
-    Generate ${numQuestions || 5} ${difficulty || 'easy'} multiple-choice math questions on ${topic || 'general math'}.  
+    const prompt = `You are a quiz generator.
+    Generate ${numQuestions || 5} ${difficulty || 'easy'} multiple-choice math questions on ${topic || 'general math'}.
 
-    Constraints:  
-    - Only generate questions if the topic is related to math or science.  
-    - If the input is not math or science related, return an empty JSON array: []  
-    - Output strictly as JSON, no text, no markdown, no explanations.  
+    Constraints:
+    - Only generate questions if the topic is related to math or science.
+    - If the input is not math or science related, return an empty JSON array: []
+    - Output strictly as JSON, no text, no markdown, no explanations.
 
-    Format:  
+    Format:
     [
-     {
+      {
       "question": "string",
       "options": ["a", "b", "c", "d"],
       "correct_answer": "string"
-     }
-    ]  
+      }
+    ]
 
-   Each object must contain exactly these keys:  
-   - 'question' (string)  
-   - 'options' (array of exactly 4 strings)  
-  - 'correct_answer' (string, matching one of the options)  
-     `
+    Each object must contain exactly these keys:
+    - 'question' (string)
+    - 'options' (array of exactly 4 strings)
+    - 'correct_answer' (string, matching one of the options)
+    `;
 
-    const response = await this.client.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: prompt,
-    });
-
-    return response.text;
+    try {
+      const response = await this.client.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [{ text: prompt }],
+      });
+      const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textResponse) {
+        throw new Error('Failed to get a valid response from the model.');
+      }
+      return textResponse;
+    } catch (error) {
+      this.logger.error(`Error generating quiz: ${error.message}`);
+      return '[]';
+    }
   }
 
   async evaluateQuiz(quiz: any, answers: any, username: string) {
+    this.logger.log(`Evaluating quiz for user: ${username}`);
     const prompt = `
       Here are the quiz questions with correct answers:
       ${JSON.stringify(quiz)}
@@ -80,57 +88,84 @@ export class QuizService {
       }
     `;
 
-    const response = await this.client.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: prompt,
-    });
-
-      const textResponse = response.candidates[0].content.parts[0].text;
-     const quizResults = JSON.parse(textResponse);
-
-  
-     const finalScore = quizResults.correct.length - quizResults.wrong.length;
-
-
-     await this.saveScore(username, finalScore);
-
- 
-     return quizResults;
-  }
-
-private async saveScore(username: string, finalScore: number) {
-  try {
-    const user = await this.prisma.user.findUnique({
-      where: { username: username },
-    });
-
-    if (!user) {
-      this.logger.error(`User not found when trying to save score: ${username}`);
-      throw new NotFoundException('User not found.');
-    }
-    const existingScore = await this.prisma.score.findUnique({
-      where: { studentId: user.id },
-    });
-
-    if (existingScore) {
-      await this.prisma.score.update({
-        where: { studentId: user.id },
-        data: { score: existingScore.score + finalScore },
+    try {
+      const response = await this.client.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [{ text: prompt }],
       });
-      this.logger.log(`Score updated for user: ${username}. New total: ${existingScore.score + finalScore}`);
-    } else {
-      await this.prisma.score.create({
-        data: {
-          studentId: user.id,
-          score: finalScore,
+      const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textResponse) {
+        throw new Error('Failed to get a valid evaluation response from the model.');
+      }
+
+      const quizResults = JSON.parse(textResponse);
+      const finalScore = quizResults.score || 0;
+
+
+      if (typeof finalScore === 'number') {
+        await this.saveScore(username, finalScore);
+      }
+
+      return quizResults;
+    } catch (error) {
+      this.logger.error(`Error evaluating quiz: ${error.message}`);
+      throw new Error('Could not evaluate the quiz.');
+    }
+  }
+  async getLeaderboardData() {
+    try {
+      const leaderboard = await this.databaseService.score.findMany({
+        orderBy: {
+          score: 'desc', // Order by score from highest to lowest
         },
+        include: {
+          student: {
+            select: {
+              username: true,
+            },
+          },
+        },
+        take: 10, 
       });
-      this.logger.log(`New score record created for user: ${username}. Score: ${finalScore}`);
+      return leaderboard;
+    } catch (error) {
+      this.logger.error(`Failed to fetch leaderboard data: ${error.message}`);
+      throw new Error('Could not retrieve leaderboard data.');
     }
-  } catch (error) {
-    this.logger.error(`Failed to save score for user ${username}: ${error.message}`);
-    throw error;
+  }
+
+  private async saveScore(username: string, finalScore: number) {
+    try {
+      const user = await this.databaseService.user.findUnique({
+        where: { username: username },
+      });
+
+      if (!user) {
+        this.logger.error(`User not found when trying to save score: ${username}`);
+        throw new NotFoundException('User not found.');
+      }
+      const existingScore = await this.databaseService.score.findUnique({
+        where: { studentId: user.id },
+      });
+
+      if (existingScore) {
+        await this.databaseService.score.update({
+          where: { studentId: user.id },
+          data: { score: existingScore.score + finalScore },
+        });
+        this.logger.log(`Score updated for user: ${username}. New total: ${existingScore.score + finalScore}`);
+      } else {
+        await this.databaseService.score.create({
+          data: {
+            studentId: user.id,
+            score: finalScore,
+          },
+        });
+        this.logger.log(`New score record created for user: ${username}. Score: ${finalScore}`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to save score for user ${username}: ${error.message}`);
+      throw error;
+    }
   }
 }
-}
-
