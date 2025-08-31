@@ -1,28 +1,22 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      =  env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  username    String    @unique
-  password    String    @unique
-  class       Int
-  role        Role
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  password  String
+  class     Int
+  role      Role
 
-  marks       Mark[]
-  score       Score[]
-  usage       Usage[]
+  marks     Mark[]
+  scores    Score[]
+  quizzes   Quiz[]     // quizzes created for this student
 }
 
 enum Role {
@@ -33,23 +27,41 @@ enum Role {
 model Mark {
   id        Int      @id @default(autoincrement())
   subject   String
-  mark     String
+  mark      String
   student   User     @relation(fields: [studentId], references: [id]) 
   studentId Int
 }
 
 model Score {
   id        Int      @id @default(autoincrement())
-  studentId  Int     @unique
+  studentId Int      @unique
   student   User     @relation(fields: [studentId], references: [id]) 
   score     Int
 }
 
-model Usage {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique 
-  count     Int      @default(0)
-  lastReset DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id])
-  userId    Int?
+
+
+model Quiz {
+  id         Int        @id @default(autoincrement())
+  topic      String
+  difficulty Difficulty
+  createdAt  DateTime   @default(now())
+  student    User       @relation(fields: [studentId], references: [id])
+  studentId  Int
+  questions  Question[]
+}
+
+model Question {
+  id          Int     @id @default(autoincrement())
+  question    String
+  options     String[]   // ["a", "b", "c", "d"]
+  correctAns  String
+  quiz        Quiz    @relation(fields: [quizId], references: [id])
+  quizId      Int
+}
+
+enum Difficulty {
+  BEGINNER
+  MODERATE
+  ADVANCED
 }

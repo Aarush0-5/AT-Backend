@@ -1,6 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import { DatabaseService } from 'src/database/database.service';
+import fs from 'fs';
+import path from 'path';
 
 @Injectable()
 export class QuizService {
@@ -8,83 +10,13 @@ export class QuizService {
 
   private readonly logger = new Logger(QuizService.name);
 
-  private readonly DAILY_STUDENT_LIMIT = 25;
-  private readonly DAILY_GLOBAL_LIMIT = 1500;
-
   constructor(private readonly databaseService: DatabaseService) {
     this.client = new GoogleGenAI({
-      apiKey: process.env.GOOGLE_API_KEY,
+      apiKey: GOOGLE_API_KEY,
     });
   }
-   
-    private async resetIfNewDay(username: string) {
-    const today = new Date().toDateString();
 
-    // per-student usage
-    let usage = await this.databaseService.usage.findUnique({
-      where: { username },
-    });
 
-    if (!usage) {
-      usage = await this.databaseService.usage.create({
-        data: { username, count: 0, lastReset: new Date() },
-      });
-    }
-
-    if (usage.lastReset.toDateString() !== today) {
-      await this.databaseService.usage.update({
-        where: { username },
-        data: { count: 0, lastReset: new Date() },
-      });
-      usage.count = 0;
-    }
-
-    // global usage record (use a fake username "__global__")
-    let global = await this.databaseService.usage.findUnique({
-      where: { username: "__global__" },
-    });
-
-    if (!global) {
-      global = await this.databaseService.usage.create({
-        data: { username: "__global__", count: 0, lastReset: new Date() },
-      });
-    }
-
-    if (global.lastReset.toDateString() !== today) {
-      await this.databaseService.usage.update({
-        where: { username: "__global__" },
-        data: { count: 0, lastReset: new Date() },
-      });
-      global.count = 0;
-    }
-
-    return { student: usage, global };
-  }
-
-  private async canMakeRequest(username: string): Promise<boolean> {
-    const { student, global } = await this.resetIfNewDay(username);
-
-    if (student.count >= this.DAILY_STUDENT_LIMIT) {
-      return false;
-    }
-    if (global.count >= this.DAILY_GLOBAL_LIMIT) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private async recordRequest(username: string) {
-    await this.databaseService.usage.update({
-      where: { username },
-      data: { count: { increment: 1 } },
-    });
-
-    await this.databaseService.usage.update({
-      where: { username: "__global__" },
-      data: { count: { increment: 1 } },
-    });
-  }
 
   async getStudentData(username: string) {
     const user = await this.databaseService.user.findUnique({
@@ -98,63 +30,85 @@ export class QuizService {
 
     return {
       username: user.username,
-      class: user.class
+      class: user.class,
     };
   }
 
-  async generateQuiz(username: string, topic: string, difficulty: string, numQuestions: number) {
-  if (!(await this.canMakeRequest(username))) {
-    this.logger.warn(`User ${username} exceeded daily quota`);
-    return '[]';
-  }
+  async generateQuiz(username: string, topic: string) {
 
+    // Load topics.json
+    const topicsPath = path.join(__dirname, '..', 'public', 'topics.json');
+    const topicsData = JSON.parse(fs.readFileSync(topicsPath, 'utf-8'));
 
-  const student = await this.getStudentData(username);
-  const classLevel = student.class;
+    // Check if the topic belongs to common or unique section
+    const commonTopic = topicsData.common_topics.find((t: any) => t.topic === topic);
+    const uniqueTopic = topicsData.unique_topics.find((t: any) => t.topic === topic);
 
-  const prompt = `You are a quiz generator.
-  Generate ${numQuestions || 5} ${difficulty || 'easy'} multiple-choice math questions on ${topic || 'general math'} for class ${classLevel}.
+    let prompt = '';
 
-  Constraints:
-  - Only generate questions if the topic is related to math.
-  - Ensure that the difficulty and wording of the questions match the level of a class ${classLevel} student.
-  - If the input is not math or science related, return an empty JSON array: []
-  - Output strictly as JSON, no text, no markdown, no explanations.
+    if (uniqueTopic) {
+      // Unique topic → 45 questions for that class
+      const classLevel = uniqueTopic.class;
+      prompt = `
+      You are a quiz generator.
+      Generate 15 beginner, 15 moderate, and 15 advanced multiple-choice math questions 
+      on ${topic} for class ${classLevel}.
 
-  Format:
-  [
-    {
-      "question": "string",
-      "options": ["a", "b", "c", "d"],
-      "correct_answer": "string"
+      Constraints:
+      - Only generate questions if the topic is related to math.
+      - Ensure that the difficulty and wording of the questions match the level of a class ${classLevel} student.
+      - Output strictly as JSON, no text, no markdown, no explanations.
+
+      Format:
+      {
+        "beginner": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ],
+        "moderate": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ],
+        "advanced": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ]
+      }
+      `;
+    } else if (commonTopic) {
+      // Common topic → 45 per class
+      const classLevels = commonTopic.classes;
+      prompt = `
+      You are a quiz generator.
+      For the topic ${topic}, generate quizzes for the following classes: ${classLevels.join(', ')}.
+
+      For each class, generate 15 beginner, 15 moderate, and 15 advanced multiple-choice math questions.
+
+      Constraints:
+      - Only generate questions if the topic is related to math.
+      - Ensure that the difficulty and wording of the questions match the level of each class.
+      - Output strictly as JSON, no text, no markdown, no explanations.
+
+      Format:
+      {
+        "class_${classLevels[0]}": {
+          "beginner": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ],
+          "moderate": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ],
+          "advanced": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ]
+        },
+        ...
+      }
+      `;
+    } else {
+      this.logger.warn(`Topic ${topic} not found in topics.json`);
+      return '[]';
     }
-  ]
 
-  Each object must contain exactly these keys:
-  - 'question' (string)
-  - 'options' (array of exactly 4 strings)
-  - 'correct_answer' (string, matching one of the options)
-  `;
+    try {
+      const response = await this.client.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [{ text: prompt }],
+      });
 
-  try {
-    const response = await this.client.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: [{ text: prompt }],
-    });
-
-    const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!textResponse) {
-      throw new Error('Failed to get a valid response from the model.');
+      const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textResponse) throw new Error('Failed to get a valid response from the model.');
+      return textResponse;
+    } catch (error: any) {
+      this.logger.error(`Error generating quiz: ${error.message}`);
+      return '[]';
     }
-
-    await this.recordRequest(username);
-    return textResponse;
-  } catch (error) {
-    this.logger.error(`Error generating quiz: ${error.message}`);
-    return '[]';
   }
-}
-
 
   async evaluateQuiz(quiz: any, answers: any, username: string) {
     this.logger.log(`Evaluating quiz for user: ${username}`);
@@ -181,41 +135,34 @@ export class QuizService {
         contents: [{ text: prompt }],
       });
       const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!textResponse) {
-        throw new Error('Failed to get a valid evaluation response from the model.');
-      }
+      if (!textResponse) throw new Error('Failed to get a valid evaluation response from the model.');
+
       const cleanResponse = textResponse.replace(/```json|```/g, '').trim();
       const quizResults = JSON.parse(cleanResponse);
       const finalScore = quizResults.score || 0;
-
 
       if (typeof finalScore === 'number') {
         await this.saveScore(username, finalScore);
       }
 
       return quizResults;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error evaluating quiz: ${error.message}`);
       throw new Error('Could not evaluate the quiz.');
     }
   }
+
   async getLeaderboardData() {
     try {
       const leaderboard = await this.databaseService.score.findMany({
-        orderBy: {
-          score: 'desc', 
-        },
+        orderBy: { score: 'desc' },
         include: {
-          student: {
-            select: {
-              username: true,
-            },
-          },
+          student: { select: { username: true } },
         },
-        take: 10, 
+        take: 10,
       });
       return leaderboard;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to fetch leaderboard data: ${error.message}`);
       throw new Error('Could not retrieve leaderboard data.');
     }
@@ -224,13 +171,14 @@ export class QuizService {
   private async saveScore(username: string, finalScore: number) {
     try {
       const user = await this.databaseService.user.findUnique({
-        where: { username: username },
+        where: { username },
       });
 
       if (!user) {
         this.logger.error(`User not found when trying to save score: ${username}`);
         throw new NotFoundException('User not found.');
       }
+
       const existingScore = await this.databaseService.score.findUnique({
         where: { studentId: user.id },
       });
@@ -240,17 +188,16 @@ export class QuizService {
           where: { studentId: user.id },
           data: { score: existingScore.score + finalScore },
         });
-        this.logger.log(`Score updated for user: ${username}. New total: ${existingScore.score + finalScore}`);
+        this.logger.log(
+          `Score updated for user: ${username}. New total: ${existingScore.score + finalScore}`,
+        );
       } else {
         await this.databaseService.score.create({
-          data: {
-            studentId: user.id,
-            score: finalScore,
-          },
+          data: { studentId: user.id, score: finalScore },
         });
         this.logger.log(`New score record created for user: ${username}. Score: ${finalScore}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to save score for user ${username}: ${error.message}`);
       throw error;
     }

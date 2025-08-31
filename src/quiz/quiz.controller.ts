@@ -35,8 +35,6 @@ export class QuizController {
     return this.quizService.generateQuiz(
       username,
       body.topic,
-      body.difficulty,
-      body.numQuestions,
     );
   }
 
