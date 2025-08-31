@@ -12,7 +12,7 @@ export class QuizService {
 
   constructor(private readonly databaseService: DatabaseService) {
     this.client = new GoogleGenAI({
-      apiKey: GOOGLE_API_KEY,
+      apiKey: process.env.GOOGLE_API_KEY,
     });
   }
 
