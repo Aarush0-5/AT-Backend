@@ -25,18 +25,16 @@ export class QuizController {
     return this.quizService.getStudentData(user.username);
   }
 
-  @UseGuards(JwtAuthGuard)
+  
   @Post('generate')
-  async generateQuiz(
-    @Req() req: Request,
-    @Body() body: { topic: string; difficulty: string; numQuestions: number },
-  ) {
-    const username = (req.user as { username: string }).username; 
-    return this.quizService.generateQuiz(
-      username,
-      body.topic,
-    );
-  }
+async generateQuiz(
+  @Req() req: Request,
+  @Body() body: { topic: string },
+) {
+  const username = (req.user as { username: string }).username;
+  return this.quizService.generateQuiz(username, body.topic);
+}
+
 
   @UseGuards(JwtAuthGuard)
   @Post('evaluate')
