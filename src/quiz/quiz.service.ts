@@ -40,10 +40,11 @@ const student = await this.getStudentData(username);
 
 const classLevel = student.class; 
 
-const prompt = `You are a quiz generator. Generate 30 moderate multiple-choice math questions on ${topic || 'general math'} for class ${classLevel}. 
+const prompt = `You are a quiz generator. Generate 40 multiple-choice math questions on ${topic || 'general math'} for class ${classLevel}. 
+Make sure the difficulty of the question increases as they move from 0 to 30 but they still remain in the scope of class ${classLevel}
 Constraints: - Only generate questions if the topic is related to math. 
 - Ensure that the difficulty and wording of the questions match the level of a class ${classLevel} student. 
-- If the input is not math or science related, return an empty JSON array: [] 
+- If the input is not math related, return an empty JSON array: [] 
 - Output strictly as JSON, no text, no markdown, no explanations. 
 Format: [ { "question": "string", "options": ["a", "b", "c", "d"], "correct_answer": "string" } ] 
 Each object must contain exactly these keys: - 'question' (string) - 'options' (array of exactly 4 strings) - 'correct_answer' (string, matching one of the options) `; 
