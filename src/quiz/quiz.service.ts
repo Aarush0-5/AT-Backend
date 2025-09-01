@@ -52,7 +52,7 @@ try {
   const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text; 
   if (!textResponse) { throw new Error('Failed to get a valid response from the model.'); } 
  return textResponse; } 
-  catch (error) { this.logger.error(`Error generating quiz: ${error.message}); return '[]'`; } }
+  catch (error) { this.logger.error(`Error generating quiz: ${error.message}`); return '[]'; } }
 
 
   async evaluateQuiz(quiz: any, answers: any, username: string) {
