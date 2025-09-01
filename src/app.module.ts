@@ -8,20 +8,30 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { QuizModule } from './quiz/quiz.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [SignupModule, DatabaseModule, LoginModule, DashboardModule,
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 5
-    }]),
-    QuizModule
+  imports: [
+    SignupModule,
+    DatabaseModule,
+    LoginModule,
+    DashboardModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 5,
+      },
+    ]),
+    ScheduleModule.forRoot(), 
+    QuizModule,
   ],
   controllers: [AppController],
-  providers: [AppService,
-    {provide: APP_GUARD,
-      useClass: ThrottlerGuard
-    }
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

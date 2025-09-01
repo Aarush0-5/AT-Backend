@@ -8,15 +8,15 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
-  password  String
-  class     Int
-  role      Role
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+  class    Int
+  role     Role
 
-  marks     Mark[]
-  scores    Score[]
-  quizzes   Quiz[]     // quizzes created for this student
+  marks   Mark[]
+  scores  Score[]
+  quizzes Quiz[]
 }
 
 enum Role {
@@ -25,39 +25,36 @@ enum Role {
 }
 
 model Mark {
-  id        Int      @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   subject   String
   mark      String
-  student   User     @relation(fields: [studentId], references: [id]) 
+  student   User   @relation(fields: [studentId], references: [id])
   studentId Int
 }
 
 model Score {
-  id        Int      @id @default(autoincrement())
-  studentId Int      @unique
-  student   User     @relation(fields: [studentId], references: [id]) 
+  id        Int  @id @default(autoincrement())
+  studentId Int  @unique
+  student   User @relation(fields: [studentId], references: [id])
   score     Int
 }
-
-
 
 model Quiz {
   id         Int        @id @default(autoincrement())
   topic      String
   difficulty Difficulty
-  createdAt  DateTime   @default(now())
-  student    User       @relation(fields: [studentId], references: [id])
-  studentId  Int
   questions  Question[]
+  User       User?      @relation(fields: [userId], references: [id])
+  userId     Int?
 }
 
 model Question {
-  id          Int     @id @default(autoincrement())
-  question    String
-  options     String[]   // ["a", "b", "c", "d"]
-  correctAns  String
-  quiz        Quiz    @relation(fields: [quizId], references: [id])
-  quizId      Int
+  id         Int      @id @default(autoincrement())
+  question   String
+  options    String[]
+  correctAns String
+  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  quizId     Int
 }
 
 enum Difficulty {

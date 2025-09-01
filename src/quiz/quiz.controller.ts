@@ -25,8 +25,8 @@ export class QuizController {
     return this.quizService.getStudentData(user.username);
   }
 
-  
-  @Post('generate')
+@UseGuards(JwtAuthGuard)
+@Post('generate')
 async generateQuiz(
   @Req() req: Request,
   @Body() body: { topic: string },

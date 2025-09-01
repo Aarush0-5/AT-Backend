@@ -7,15 +7,15 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   dotenv.config();
 
- /*app.use(helmet({
+ app.use(helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'", 'https://amiteshtutorials.netlify.app',  ],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app',  ],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app' , ],
-        imgSrc: ["'self'", "data:", 'https://amiteshtutorials.netlify.app',],
-        connectSrc: ["'self'", 'https://amiteshtutorials.netlify.app', ],
-        fontSrc: ["'self'", 'https://amiteshtutorials.netlify.app', ],
+        defaultSrc: ["'self'", 'https://amiteshtutorials.netlify.app', "localhost:3000" ],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app', "localhost:3000" ],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://amiteshtutorials.netlify.app' , "localhost:3000" ],
+        imgSrc: ["'self'", "data:", 'https://amiteshtutorials.netlify.app', 'localhost:3000'],
+        connectSrc: ["'self'", 'https://amiteshtutorials.netlify.app', "localhost:3000"],
+        fontSrc: ["'self'", 'https://amiteshtutorials.netlify.app',"localhost:3000" ],
         objectSrc: ["'none'"],
         frameSrc: ["'none'"],
       },
@@ -40,13 +40,15 @@ async function bootstrap() {
   }));
   
   app.enableCors({
-    origin: ['https://amiteshtutorials.netlify.app',],
+    origin: ['https://amiteshtutorials.netlify.app', "localhost:3000"],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-  });*/
+  });
   
   app.setGlobalPrefix('api');
 
   await app.listen(process.env.PORT ?? 5000);
+
+  const app
 }
 bootstrap();

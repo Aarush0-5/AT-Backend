@@ -1,8 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import { DatabaseService } from 'src/database/database.service';
-import fs from 'fs';
-import path from 'path';
+
 
 @Injectable()
 export class QuizService {
@@ -34,81 +33,27 @@ export class QuizService {
     };
   }
 
-  async generateQuiz(username: string, topic: string) {
+async generateQuiz(username: string, topic: string, ) 
+{ 
 
-    // Load topics.json
-    const topicsPath = path.join(__dirname, '..', 'public', 'topics.json');
-    const topicsData = JSON.parse(fs.readFileSync(topicsPath, 'utf-8'));
+const student = await this.getStudentData(username); 
 
-    // Check if the topic belongs to common or unique section
-    const commonTopic = topicsData.common_topics.find((t: any) => t.topic === topic);
-    const uniqueTopic = topicsData.unique_topics.find((t: any) => t.topic === topic);
+const classLevel = student.class; 
 
-    let prompt = '';
+const prompt = `You are a quiz generator. Generate 30 moderate multiple-choice math questions on ${topic || 'general math'} for class ${classLevel}. 
+Constraints: - Only generate questions if the topic is related to math. 
+- Ensure that the difficulty and wording of the questions match the level of a class ${classLevel} student. 
+- If the input is not math or science related, return an empty JSON array: [] 
+- Output strictly as JSON, no text, no markdown, no explanations. 
+Format: [ { "question": "string", "options": ["a", "b", "c", "d"], "correct_answer": "string" } ] 
+Each object must contain exactly these keys: - 'question' (string) - 'options' (array of exactly 4 strings) - 'correct_answer' (string, matching one of the options) `; 
+try { 
+  const response = await this.client.models.generateContent({ model: 'gemini-1.5-flash', contents: [{ text: prompt }], }); 
+  const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text; 
+  if (!textResponse) { throw new Error('Failed to get a valid response from the model.'); } 
+ return textResponse; } 
+  catch (error) { this.logger.error(Error generating quiz: ${error.message}); return '[]'; } }
 
-    if (uniqueTopic) {
-      // Unique topic → 45 questions for that class
-      const classLevel = uniqueTopic.class;
-      prompt = `
-      You are a quiz generator.
-      Generate 15 beginner, 15 moderate, and 15 advanced multiple-choice math questions 
-      on ${topic} for class ${classLevel}.
-
-      Constraints:
-      - Only generate questions if the topic is related to math.
-      - Ensure that the difficulty and wording of the questions match the level of a class ${classLevel} student.
-      - Output strictly as JSON, no text, no markdown, no explanations.
-
-      Format:
-      {
-        "beginner": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ],
-        "moderate": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ],
-        "advanced": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ]
-      }
-      `;
-    } else if (commonTopic) {
-      // Common topic → 45 per class
-      const classLevels = commonTopic.classes;
-      prompt = `
-      You are a quiz generator.
-      For the topic ${topic}, generate quizzes for the following classes: ${classLevels.join(', ')}.
-
-      For each class, generate 15 beginner, 15 moderate, and 15 advanced multiple-choice math questions.
-
-      Constraints:
-      - Only generate questions if the topic is related to math.
-      - Ensure that the difficulty and wording of the questions match the level of each class.
-      - Output strictly as JSON, no text, no markdown, no explanations.
-
-      Format:
-      {
-        "class_${classLevels[0]}": {
-          "beginner": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ],
-          "moderate": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ],
-          "advanced": [ { "question": "string", "options": ["a","b","c","d"], "correct_answer": "string" } ]
-        },
-        ...
-      }
-      `;
-    } else {
-      this.logger.warn(`Topic ${topic} not found in topics.json`);
-      return '[]';
-    }
-
-    try {
-      const response = await this.client.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: [{ text: prompt }],
-      });
-
-      const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!textResponse) throw new Error('Failed to get a valid response from the model.');
-      return textResponse;
-    } catch (error: any) {
-      this.logger.error(`Error generating quiz: ${error.message}`);
-      return '[]';
-    }
-  }
 
   async evaluateQuiz(quiz: any, answers: any, username: string) {
     this.logger.log(`Evaluating quiz for user: ${username}`);
