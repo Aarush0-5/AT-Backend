@@ -16,7 +16,6 @@ model User {
 
   marks   Mark[]
   scores  Score[]
-  quizzes Quiz[]
 }
 
 enum Role {
@@ -39,26 +38,3 @@ model Score {
   score     Int
 }
 
-model Quiz {
-  id         Int        @id @default(autoincrement())
-  topic      String
-  difficulty Difficulty
-  questions  Question[]
-  User       User?      @relation(fields: [userId], references: [id])
-  userId     Int?
-}
-
-model Question {
-  id         Int      @id @default(autoincrement())
-  question   String
-  options    String[]
-  correctAns String
-  quiz       Quiz     @relation(fields: [quizId], references: [id])
-  quizId     Int
-}
-
-enum Difficulty {
-  BEGINNER
-  MODERATE
-  ADVANCED
-}
