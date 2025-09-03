@@ -40,7 +40,7 @@ const student = await this.getStudentData(username);
 
 const classLevel = student.class; 
 
-const prompt = `You are a quiz generator. Generate 1 multiple-choice math questions on ${topic || 'general math'} for class ${classLevel}. 
+const prompt = `You are a quiz generator. Generate 5 multiple-choice math questions on ${topic || 'general math'} for class ${classLevel}. 
 Make sure the difficulty of the question increases as they move from 0 to 30 but they still remain in the scope of class ${classLevel}
 Constraints: - Only generate questions if the topic is related to math. 
 - Ensure that the difficulty and wording of the questions match the level of a class ${classLevel} student. 
