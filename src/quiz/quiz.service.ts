@@ -77,7 +77,7 @@ try {
 
     try {
       const response = await this.client.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash-lite',
         contents: [{ text: prompt }],
       });
       const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text;
