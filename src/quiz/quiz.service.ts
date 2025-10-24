@@ -49,7 +49,7 @@ Constraints: - Only generate questions if the topic is related to math.
 Format: [ { "question": "string", "options": ["a", "b", "c", "d"], "correct_answer": "string" } ] 
 Each object must contain exactly these keys: - 'question' (string) - 'options' (array of exactly 4 strings) - 'correct_answer' (string, matching one of the options) `; 
 try { 
-  const response = await this.client.models.generateContent({ model: 'gemini-1.5-flash', contents: [{ text: prompt }], }); 
+  const response = await this.client.models.generateContent({ model: 'gemini-2.5-flash-lite', contents: [{ text: prompt }], }); 
   const textResponse = response.candidates?.[0]?.content?.parts?.[0]?.text; 
   if (!textResponse) { throw new Error('Failed to get a valid response from the model.'); } 
  return textResponse; } 
